@@ -1,4 +1,3 @@
-const MAX_SELECTED_ROWS = 25;
 const MAX_QUESTIONS = 20;
 const PAGE_SIZE = 40;
 
@@ -187,7 +186,12 @@ function buildQuestions() {
 function renderRunState() {
   const selected = state.selectedRows.size;
   const { errors } = buildQuestions();
-  els.selectionCount.textContent = `${selected} ${selected === 1 ? "row" : "rows"} selected${selected >= MAX_SELECTED_ROWS ? ` (limit ${MAX_SELECTED_ROWS})` : ""}`;
+  const selectable = state.visibleRows.length;
+  const allRowsVisible = selectable === state.rows.length;
+  els.selectVisible.textContent = allRowsVisible
+    ? `Select all ${formatNumber(selectable)}`
+    : `Select all ${formatNumber(selectable)} matches`;
+  els.selectionCount.textContent = `${formatNumber(selected)} ${selected === 1 ? "row" : "rows"} selected`;
   els.runSummary.textContent = selected ? `${selected} ${selected === 1 ? "state" : "states"} x ${state.questions.length} ${state.questions.length === 1 ? "question" : "questions"}` : "Select at least one row";
   els.runButton.disabled = !selected || errors.length > 0 || state.running;
   els.runButton.textContent = state.running ? "Running" : "Run Jev";
@@ -326,10 +330,7 @@ document.querySelectorAll("[data-next]").forEach((button) => button.addEventList
 els.searchInput.addEventListener("input", () => { state.visibleLimit = PAGE_SIZE; renderTable(); });
 els.showMoreRows.addEventListener("click", () => { state.visibleLimit += PAGE_SIZE; renderTable(); });
 els.selectVisible.addEventListener("click", () => {
-  for (const { index } of state.visibleRows.slice(0, state.visibleLimit)) {
-    if (state.selectedRows.size >= MAX_SELECTED_ROWS) break;
-    state.selectedRows.add(index);
-  }
+  for (const { index } of state.visibleRows) state.selectedRows.add(index);
   renderTable();
 });
 els.clearSelection.addEventListener("click", () => { state.selectedRows.clear(); renderTable(); });
@@ -337,7 +338,6 @@ els.dataRows.addEventListener("change", (event) => {
   const checkbox = event.target.closest("[data-row]");
   if (!checkbox) return;
   const index = Number(checkbox.dataset.row);
-  if (checkbox.checked && state.selectedRows.size >= MAX_SELECTED_ROWS) { checkbox.checked = false; toast(`Select up to ${MAX_SELECTED_ROWS} rows per run`); return; }
   if (checkbox.checked) state.selectedRows.add(index); else state.selectedRows.delete(index);
   renderTable();
 });
