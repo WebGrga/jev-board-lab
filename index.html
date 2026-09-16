@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Turn private CSV rows into structured Jev judgments." />
+    <meta name="theme-color" content="#f2f1ec" />
+    <title>Jev CSV Workbench</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="#" aria-label="Jev CSV Workbench home">
+          <span class="brand-mark">JEV</span>
+          <span class="brand-name">CSV Workbench</span>
+        </a>
+        <div class="top-actions">
+          <span class="privacy-status">Browser-local files</span>
+          <button id="themeButton" class="icon-button" type="button" aria-label="Toggle theme" title="Toggle theme">
+            <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 3v2m0 14v2M3 12h2m14 0h2M5.64 5.64l1.42 1.42m9.88 9.88 1.42 1.42M18.36 5.64l-1.42 1.42M7.06 16.94l-1.42 1.42M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z"/></svg>
+          </button>
+          <label class="button button-primary compact-upload" for="fileInput">Choose CSV</label>
+          <input id="fileInput" type="file" accept=".csv,text/csv" hidden />
+        </div>
+      </header>
+
+      <main>
+        <section id="emptyView" class="empty-view" aria-labelledby="pageTitle">
+          <div class="empty-copy">
+            <p class="eyebrow">RG LAB / JEV TOOL</p>
+            <h1 id="pageTitle">Ask precise questions of any CSV.</h1>
+            <p class="lede">Upload a file, select the rows that become state, then run focused Choice, Score, and Noul questions through Jev.</p>
+            <div class="privacy-note">
+              <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M7 11V8a5 5 0 0 1 10 0v3m-11 0h12v9H6v-9Z"/></svg>
+              <div><strong>Your file stays in this tab.</strong><span>It is not uploaded when selected. Only rows you explicitly run are sent for inference, and they are not stored by this app.</span></div>
+            </div>
+          </div>
+          <label id="dropZone" class="drop-zone" for="fileInput">
+            <span class="drop-icon"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M5 14v5h14v-5"/></svg></span>
+            <strong>Drop a CSV here</strong>
+            <span>or choose a file from your computer</span>
+            <small>CSV only. Parsed locally in your browser.</small>
+          </label>
+          <div class="workflow-note" aria-label="How it works">
+            <div><span>Upload</span><p>Columns become named fields in a JSON state.</p></div>
+            <div><span>Question</span><p>Define several small, independent judgments.</p></div>
+            <div><span>Evaluate</span><p>Jev returns typed answers for every selected row.</p></div>
+          </div>
+        </section>
+
+        <section id="workbench" class="workbench" hidden aria-label="CSV question workbench">
+          <div class="dataset-head">
+            <div>
+              <p class="eyebrow">ACTIVE DATASET</p>
+              <h1 id="datasetName">Untitled.csv</h1>
+              <p id="datasetSummary" class="dataset-summary"></p>
+            </div>
+            <div class="dataset-actions">
+              <button id="downloadResults" class="button button-secondary" type="button" hidden>Export results</button>
+              <label class="button button-primary" for="fileInput">Replace CSV</label>
+            </div>
+          </div>
+
+          <nav class="step-tabs" aria-label="Workbench sections">
+            <button type="button" data-tab="data" class="active"><span>1</span> Select state</button>
+            <button type="button" data-tab="questions"><span>2</span> Write questions <b id="questionCount">1</b></button>
+            <button type="button" data-tab="results"><span>3</span> Results <b id="resultBadge">0</b></button>
+          </nav>
+
+          <section id="dataPanel" class="tab-panel" aria-labelledby="dataHeading">
+            <div class="panel-heading">
+              <div><p class="section-label">State setup</p><h2 id="dataHeading">Choose rows and fields</h2></div>
+              <p>Each selected row becomes one Jev state. All enabled questions run together against that row.</p>
+            </div>
+            <div class="state-toolbar">
+              <div class="selection-actions">
+                <button id="selectVisible" type="button">Select visible</button>
+                <button id="clearSelection" type="button">Clear selection</button>
+                <span id="selectionCount">0 rows selected</span>
+              </div>
+              <label class="search-box">
+                <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m20 20-4.4-4.4m2.4-4.6a7 7 0 1 1-14 0 7 7 0 0 1 14 0Z"/></svg>
+                <input id="searchInput" type="search" placeholder="Filter rows" />
+              </label>
+            </div>
+            <details class="field-picker">
+              <summary><span>Fields included in state</span><b id="fieldCount"></b></summary>
+              <div id="fieldOptions" class="field-options"></div>
+            </details>
+            <div class="table-wrap">
+              <table id="dataTable">
+                <thead id="dataHead"></thead>
+                <tbody id="dataRows"></tbody>
+              </table>
+              <div id="noMatches" class="inline-empty" hidden>No rows match this filter.</div>
+            </div>
+            <button id="showMoreRows" class="show-more" type="button" hidden>Show more rows</button>
+            <div class="panel-footer"><button class="button button-primary next-button" type="button" data-next="questions">Write questions</button></div>
+          </section>
+
+          <section id="questionsPanel" class="tab-panel" hidden aria-labelledby="questionsHeading">
+            <div class="panel-heading">
+              <div><p class="section-label">Question set</p><h2 id="questionsHeading">One judgment per question</h2></div>
+              <p>Keep questions independent and specific. Reference state fields with paths like <code>`description`</code>.</p>
+            </div>
+            <div class="question-guide">
+              <button type="button" data-template="noul"><strong>Noul</strong><span>Yes or no probability</span></button>
+              <button type="button" data-template="choice"><strong>Choice</strong><span>One of known options</span></button>
+              <button type="button" data-template="score"><strong>Score</strong><span>Position on defined levels</span></button>
+            </div>
+            <div id="questionList" class="question-list"></div>
+            <button id="addQuestion" class="add-question" type="button">
+              <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+              Add question
+            </button>
+            <div id="validationSummary" class="validation-summary" hidden></div>
+            <div class="run-bar">
+              <div><strong id="runSummary">Select at least one row</strong><span id="runPrivacy">Selected state and questions are sent only when you run Jev.</span></div>
+              <button id="runButton" class="button button-accent" type="button" disabled>Run Jev</button>
+            </div>
+          </section>
+
+          <section id="resultsPanel" class="tab-panel" hidden aria-labelledby="resultsHeading">
+            <div class="panel-heading">
+              <div><p class="section-label">Typed answers</p><h2 id="resultsHeading">Results</h2></div>
+              <p>Read probability distributions and confidence alongside the selected answer or score.</p>
+            </div>
+            <div id="resultsEmpty" class="results-empty">
+              <h3>No results yet</h3>
+              <p>Select rows, define questions, and run Jev.</p>
+              <button class="button button-secondary" type="button" data-next="questions">Go to questions</button>
+            </div>
+            <div id="resultsContent" hidden>
+              <div class="results-toolbar">
+                <div id="usageSummary"></div>
+                <button id="exportResultsInline" type="button">Download JSON</button>
+              </div>
+              <div id="resultList" class="result-list"></div>
+            </div>
+          </section>
+        </section>
+      </main>
+    </div>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <script src="./config.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>

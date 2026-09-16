@@ -1,0 +1,6 @@
+.env
+.dev.vars
+.wrangler/
+.netlify/
+node_modules/
+data/*.json

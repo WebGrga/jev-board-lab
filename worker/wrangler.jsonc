@@ -1,0 +1,9 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "jev-board-api",
+  "main": "src/index.js",
+  "compatibility_date": "2026-09-16",
+  "vars": {
+    "ALLOWED_ORIGINS": "https://lab.rokogrga.com,https://rg-jev-board.netlify.app"
+  }
+}
