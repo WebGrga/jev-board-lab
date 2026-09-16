@@ -10,6 +10,8 @@ A browser-first interface for turning CSV rows into structured Jev judgments.
 - Each explicitly selected row becomes one JSON state when the user clicks Run Jev.
 - Only that state and the user-defined questions are sent through the Cloudflare Worker to TypeSafe.
 - The Worker validates and forwards requests without storing or logging their bodies.
+- The site fails closed behind a Netlify Edge Function password gate.
+- The Cloudflare Worker verifies the same signed login cookie before calling Jev.
 - Refreshing the page clears the loaded file and results.
 
 ## Jev workflow
@@ -43,10 +45,13 @@ node scripts/transform.mjs path/to/input.csv data/local-output.json
 - Cloudflare Worker keeps `TYPESAFE_API_KEY` server-side and forwards ephemeral inference requests.
 - The RG Lab hub proxies `/jev-board/` to the project Netlify site and `/jev-board/api/*` to the Worker.
 
-Set the Worker secret without putting it in source control:
+Set a long, unique `PROTECTED_PAGE_PASSWORD` in Netlify with the Functions scope, then redeploy. Set that same value and the Jev key as encrypted Worker secrets without putting either in source control:
 
 ```sh
+wrangler secret put PROTECTED_PAGE_PASSWORD
 wrangler secret put TYPESAFE_API_KEY
 ```
+
+The login creates a signed, secure, HTTP-only cookie that expires after 24 hours. The edge gate blocks the entire frontend when the password is missing, and the Worker independently rejects unauthenticated inference requests.
 
 Treat `main` as production. Make future changes on branches and merge after review.

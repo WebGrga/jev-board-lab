@@ -2,6 +2,35 @@ const TYPESAFE_ENDPOINT = "https://api.typesafe.ai/v1/systemone";
 const MAX_BODY_BYTES = 160_000;
 const MAX_STATE_CHARS = 120_000;
 const MAX_QUESTIONS = 20;
+const SESSION_COOKIE = "jev_session";
+const encoder = new TextEncoder();
+
+function decodeBase64Url(value) {
+  const padded = value.replace(/-/g, "+").replace(/_/g, "/").padEnd(Math.ceil(value.length / 4) * 4, "=");
+  const binary = atob(padded);
+  return Uint8Array.from(binary, (character) => character.charCodeAt(0));
+}
+
+async function validSession(request, password) {
+  if (!password) return false;
+  const cookie = request.headers.get("cookie") || "";
+  const encoded = cookie.split(";").map((part) => part.trim()).find((part) => part.startsWith(`${SESSION_COOKIE}=`))?.slice(SESSION_COOKIE.length + 1);
+  if (!encoded) return false;
+  const [expiresAt, signature, ...extra] = encoded.split(".");
+  if (extra.length || !expiresAt || !signature || Number(expiresAt) <= Math.floor(Date.now() / 1000)) return false;
+  try {
+    const key = await crypto.subtle.importKey(
+      "raw",
+      encoder.encode(password),
+      { name: "HMAC", hash: "SHA-256" },
+      false,
+      ["verify"],
+    );
+    return crypto.subtle.verify("HMAC", key, decodeBase64Url(signature), encoder.encode(expiresAt));
+  } catch {
+    return false;
+  }
+}
 
 function allowedOrigin(origin, env) {
   const allowed = String(env.ALLOWED_ORIGINS || "").split(",").map((value) => value.trim()).filter(Boolean);
@@ -13,6 +42,7 @@ function corsHeaders(origin) {
     "access-control-allow-origin": origin,
     "access-control-allow-headers": "content-type",
     "access-control-allow-methods": "POST, OPTIONS",
+    "access-control-allow-credentials": "true",
     "cache-control": "no-store",
     "content-type": "application/json; charset=utf-8",
     "vary": "Origin",
@@ -45,6 +75,8 @@ export default {
     if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: corsHeaders(origin) });
     const url = new URL(request.url);
     if (request.method !== "POST" || url.pathname !== "/evaluate") return json({ error: "Not found" }, 404, origin);
+    if (!env.PROTECTED_PAGE_PASSWORD) return json({ error: "Private access is not configured" }, 503, origin);
+    if (!(await validSession(request, env.PROTECTED_PAGE_PASSWORD))) return json({ error: "Authentication required" }, 401, origin);
     if (!env.TYPESAFE_API_KEY) return json({ error: "Jev API is not configured" }, 503, origin);
     const declaredLength = Number(request.headers.get("content-length") || 0);
     if (declaredLength > MAX_BODY_BYTES) return json({ error: "Request is too large" }, 413, origin);
