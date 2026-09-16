@@ -112,7 +112,7 @@ export default async (request, context) => {
     return new Response(null, {
       status: 303,
       headers: {
-        location: ".",
+        location: "../",
         "set-cookie": `${COOKIE_NAME}=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Strict`,
       },
     });
@@ -126,7 +126,7 @@ export default async (request, context) => {
     return new Response(null, {
       status: 303,
       headers: {
-        location: ".",
+        location: "../",
         "set-cookie": `${COOKIE_NAME}=${session}; Path=/; Max-Age=${SESSION_SECONDS}; HttpOnly; Secure; SameSite=Strict`,
       },
     });
