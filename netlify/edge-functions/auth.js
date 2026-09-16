@@ -71,6 +71,7 @@ function page({ error = "", configured = true } = {}) {
       </div>
       ${status}
     </form>` : "";
+  const accessNote = configured ? '<p class="access-note">Want access? Add me on Discord: <strong>kahlogosh</strong>.</p>' : "";
 
   return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -85,9 +86,10 @@ function page({ error = "", configured = true } = {}) {
   label{display:block;margin-bottom:9px;color:var(--ink);font-weight:650}.field-row{display:grid;grid-template-columns:1fr auto;gap:10px}
   input,button{min-height:48px;border-radius:9px;font:inherit}input{width:100%;border:1px solid #45463f;background:#11120f;color:var(--ink);padding:0 14px;outline:none}input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(216,255,95,.12)}
   button{border:0;background:var(--accent);color:#171a0d;padding:0 22px;font-weight:800;cursor:pointer}button:hover{filter:brightness(1.06)}.error{margin:13px 0 0;color:var(--danger)}
+  .access-note{margin:24px 0 0;padding-top:20px;border-top:1px solid var(--line);font-size:13px}.access-note strong{color:var(--ink);font-family:ui-monospace,SFMono-Regular,monospace}
   .lock{display:inline-grid;place-items:center;width:34px;height:34px;margin-bottom:26px;border:1px solid #44463d;border-radius:50%;color:var(--accent)}
   @media(max-width:520px){main{padding:28px}.field-row{grid-template-columns:1fr}button{width:100%}}
-</style></head><body><main><div class="lock" aria-hidden="true">●</div><p class="eyebrow">RG Lab / Private</p><h1>Jev Board</h1><p>${message}</p>${form}</main></body></html>`;
+</style></head><body><main><div class="lock" aria-hidden="true">●</div><p class="eyebrow">RG Lab / Private</p><h1>Jev Board</h1><p>${message}</p>${form}${accessNote}</main></body></html>`;
 }
 
 function html(body, status = 200, headers = {}) {

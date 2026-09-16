@@ -15,7 +15,9 @@ assert.match(await response.text(), /locked until its password is configured/);
 configuredPassword = "correct horse battery staple";
 response = await gate(new Request("https://example.com/"), { next });
 assert.equal(response.status, 401);
-assert.match(await response.text(), /action="\.\/__jev-auth\/login"/);
+const loginPage = await response.text();
+assert.match(loginPage, /action="\.\/__jev-auth\/login"/);
+assert.match(loginPage, /Discord: <strong>kahlogosh<\/strong>/);
 
 response = await gate(new Request("https://example.com/__jev-auth/login", {
   method: "POST",
